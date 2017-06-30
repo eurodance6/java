@@ -1,0 +1,434 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package Vista.Gestion;
+
+import DataAccess.ConexionDB;
+import DataAccess.EjemplarLibroDB;
+import DataAccess.PrestamoDB;
+import Modelo.Autor;
+import Modelo.EjemplarLibro;
+import Modelo.UsuarioBiblioteca;
+import java.awt.Color;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import javax.swing.JOptionPane;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableModel;
+
+/**
+ *
+ * @author franc
+ */
+public class GenerarPrestamo extends javax.swing.JInternalFrame implements ListSelectionListener {
+    
+    private static volatile GenerarPrestamo intancia = null;
+    
+    private static final String [] TABLE_COLUMNS = {"ID Ejemplar", "Titulo", "Autores"};
+    
+    private EjemplarLibroDB ejemplaresdb;
+    
+    private UsuarioBiblioteca usuario = null;
+    private java.sql.Date currDate, fechaFin;
+    private ArrayList<EjemplarLibro> seleccionados = new ArrayList<>();
+    
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+    
+    /**
+     * Creates new form GenerarPrestamo
+     */
+    public GenerarPrestamo(UsuarioBiblioteca usuario) {
+        ejemplaresdb = new EjemplarLibroDB();
+        currDate = new java.sql.Date(Calendar.getInstance().getTimeInMillis());
+        fechaFin = new java.sql.Date(currDate.getTime());
+        
+        initComponents();
+        addListeners();
+        updateTable();
+        setUsuario(usuario);
+    }
+    
+    private void addListeners() {
+        booksTable.getSelectionModel().addListSelectionListener(this);
+    }
+    
+    public void addBook(EjemplarLibro libro) {
+        if(libro==null) return;
+        if(seleccionados.contains(libro)) {
+            JOptionPane.showMessageDialog(this, "El libro ya se encuentra en lista", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if((PrestamoDB.cuentaPrestamosUsuario(usuario.getCodigo()) + seleccionados.size())>=usuario.getMaxReserva()) {
+            JOptionPane.showMessageDialog(this, "Ya se supero el limite de libros para este usuario", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        seleccionados.add(libro);
+        updateTable();
+        updateLoanQ();
+    }
+    
+    public void setUsuario(UsuarioBiblioteca usuario) {
+        this.usuario = usuario;
+        if(usuario==null) {
+            btnGenerarPrestamo.setEnabled(false);
+            
+            fechaFin.setTime(currDate.getTime());
+            
+            tfNombre.setText("");
+            tfCodigo.setText("");
+            tfFechaFin.setText("");
+            labelQuantBooks.setText("0/?");
+        } else {
+            btnGenerarPrestamo.setEnabled(true);
+            
+            Calendar c = Calendar.getInstance();
+            c.setTime(currDate);
+            c.add(Calendar.DATE, usuario.getTiempoReserva());
+            fechaFin.setTime(c.getTimeInMillis());
+            
+            tfNombre.setText(usuario.getNombre().toUpperCase() + " " +
+                    usuario.getApPaterno().toUpperCase() + " " +
+                    usuario.getApMaterno().toUpperCase());
+            tfCodigo.setText("" + usuario.getCodigo());
+            tfFechaFin.setText(dateFormat.format(fechaFin));
+            
+            updateLoanQ();
+        }
+    }
+    
+    private void updateLoanQ() {
+        int prestamosHechos = PrestamoDB.cuentaPrestamosUsuario(usuario.getCodigo()) +
+                seleccionados.size();
+        int maxReserva = usuario.getMaxReserva();
+        
+        if(prestamosHechos>maxReserva) labelQuantBooks.setForeground(Color.RED);
+        else labelQuantBooks.setForeground(Color.BLACK);
+        labelQuantBooks.setText(prestamosHechos + "/" + maxReserva);
+    }
+    
+    private void updateTable() {
+        labelQuantBooks.setText(seleccionados.size() + "/" + (usuario==null?"?":usuario.getMaxReserva()));
+        
+        String [][] data = new String[seleccionados.size()][3];
+        for(int i=0;i<seleccionados.size();i++) {
+            EjemplarLibro libro = seleccionados.get(i);
+            data[i][0] = "" + libro.getId();
+            data[i][1] = libro.getTitulo();
+            data[i][2] = Autor.format(libro.getLibro().getAutores());
+        }
+        booksTable.setModel(new DefaultTableModel(data, TABLE_COLUMNS){
+            @Override
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return false;
+            }
+        });
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        panelUsuario = new javax.swing.JPanel();
+        tfNombre = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
+        tfCodigo = new javax.swing.JTextField();
+        jLabel1 = new javax.swing.JLabel();
+        jPanel2 = new javax.swing.JPanel();
+        jLabel3 = new javax.swing.JLabel();
+        jTextField3 = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
+        tfFechaFin = new javax.swing.JTextField();
+        jPanel3 = new javax.swing.JPanel();
+        jLabel4 = new javax.swing.JLabel();
+        labelQuantBooks = new javax.swing.JLabel();
+        btnAddBook = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        booksTable = new javax.swing.JTable();
+        btnRemover = new javax.swing.JButton();
+        btnGenerarPrestamo = new javax.swing.JButton();
+
+        setClosable(true);
+        setIconifiable(true);
+        setMaximizable(true);
+        setResizable(true);
+        setTitle("Nuevo Préstamo");
+
+        panelUsuario.setBorder(javax.swing.BorderFactory.createTitledBorder("Usuario biblioteca"));
+
+        tfNombre.setEditable(false);
+        tfNombre.setText("NOMBRE COMPLETO DEL ALUMNO");
+
+        jLabel2.setText("Código:");
+
+        tfCodigo.setEditable(false);
+        tfCodigo.setText("20170895");
+
+        jLabel1.setText("Nombre:");
+
+        javax.swing.GroupLayout panelUsuarioLayout = new javax.swing.GroupLayout(panelUsuario);
+        panelUsuario.setLayout(panelUsuarioLayout);
+        panelUsuarioLayout.setHorizontalGroup(
+            panelUsuarioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelUsuarioLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelUsuarioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1)
+                    .addGroup(panelUsuarioLayout.createSequentialGroup()
+                        .addGap(6, 6, 6)
+                        .addComponent(jLabel2)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(panelUsuarioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelUsuarioLayout.createSequentialGroup()
+                        .addComponent(tfCodigo, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 254, Short.MAX_VALUE))
+                    .addComponent(tfNombre))
+                .addContainerGap())
+        );
+        panelUsuarioLayout.setVerticalGroup(
+            panelUsuarioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelUsuarioLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelUsuarioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(tfNombre, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelUsuarioLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel2)
+                    .addComponent(tfCodigo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Préstamo"));
+
+        jLabel3.setText("Fecha inicio:");
+
+        jTextField3.setEditable(false);
+        jTextField3.setText(dateFormat.format(currDate));
+
+        jLabel5.setText("Fecha fin:");
+
+        tfFechaFin.setEditable(false);
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel3)
+                    .addComponent(jLabel5))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(tfFechaFin)
+                    .addComponent(jTextField3))
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel5)
+                    .addComponent(tfFechaFin, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Libros"));
+
+        jLabel4.setText("Cantidad:");
+
+        labelQuantBooks.setText("###/###");
+
+        btnAddBook.setText("Añadir");
+        btnAddBook.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAddBookActionPerformed(evt);
+            }
+        });
+
+        booksTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane1.setViewportView(booksTable);
+
+        btnRemover.setText("Remover");
+        btnRemover.setEnabled(false);
+        btnRemover.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRemoverActionPerformed(evt);
+            }
+        });
+
+        btnGenerarPrestamo.setText("Generar Prestamo");
+        btnGenerarPrestamo.setEnabled(false);
+        btnGenerarPrestamo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnGenerarPrestamoActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 494, Short.MAX_VALUE)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(jLabel4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(labelQuantBooks)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnRemover)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnAddBook))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(btnGenerarPrestamo)))
+                .addContainerGap())
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel4)
+                        .addComponent(labelQuantBooks))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(btnAddBook)
+                        .addComponent(btnRemover)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 168, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnGenerarPrestamo))
+        );
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(panelUsuario, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(panelUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(1, 1, 1)
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void btnAddBookActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddBookActionPerformed
+        // TODO add your handling code here:
+        String input = JOptionPane.showInputDialog(this, "Ingrese el id del libro", "Buscar libro", JOptionPane.PLAIN_MESSAGE);
+        if(input==null) return;
+        try {
+            int bookId = Integer.parseInt(input);
+            EjemplarLibro libro = ejemplaresdb.getEjemplar(bookId);
+            if(libro==null) {
+                JOptionPane.showMessageDialog(this, "No se encontro libro en la base de datos", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+            addBook(libro);
+        } catch(NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "No se encontro libro en la base de datos", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_btnAddBookActionPerformed
+
+    private void btnRemoverActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoverActionPerformed
+        int [] selection = booksTable.getSelectedRows();
+        Arrays.sort(selection);
+        for(int i=selection.length-1;i>=0;i--)
+            seleccionados.remove(i);
+        updateTable();
+    }//GEN-LAST:event_btnRemoverActionPerformed
+
+    private void btnGenerarPrestamoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGenerarPrestamoActionPerformed
+        // TODO add your handling code here:
+        ConexionDB.savepoint(getClass(), "PRESTAMO");
+        int idPrestamo = PrestamoDB.crearPrestamo(usuario.getCodigo(), currDate);
+        if(idPrestamo<0) {
+            ConexionDB.rollback(getClass());
+            JOptionPane.showMessageDialog(this, "No se pudo generar prestamo", "Error en la base de datos", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        for(EjemplarLibro ejemplar: seleccionados) {
+            int res = PrestamoDB.addDetallePrestamo(idPrestamo, ejemplar.getId(), fechaFin);
+            if(res==0) {
+                JOptionPane.showMessageDialog(this, "El libro " + ejemplar.getTitulo() + " no esta disponible", 
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                ConexionDB.rollback(getClass());
+                return;
+            }
+        }
+        ConexionDB.commit(getClass());
+        JOptionPane.showMessageDialog(this, "Se genero prestamo exitosamente", "Exito", JOptionPane.PLAIN_MESSAGE);
+        dispose();
+    }//GEN-LAST:event_btnGenerarPrestamoActionPerformed
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTable booksTable;
+    private javax.swing.JButton btnAddBook;
+    public javax.swing.JButton btnGenerarPrestamo;
+    private javax.swing.JButton btnRemover;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTextField jTextField3;
+    private javax.swing.JLabel labelQuantBooks;
+    private javax.swing.JPanel panelUsuario;
+    private javax.swing.JTextField tfCodigo;
+    private javax.swing.JTextField tfFechaFin;
+    private javax.swing.JTextField tfNombre;
+    // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        btnRemover.setEnabled(booksTable.getSelectedRows().length>0);
+    }
+}

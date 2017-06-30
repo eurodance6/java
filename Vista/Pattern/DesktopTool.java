@@ -1,0 +1,23 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package Vista.Pattern;
+
+/**
+ *
+ * @author alulab14
+ */
+public enum DesktopTool {
+    
+    GENERAR_PRESTAMO,
+    BUSCADOR_LIBROS,
+    GESTION_USUARIOS,
+    RESERVAS,
+    SOLICITUDES,
+    REPORTES,
+    BUSCAR_USUARIO,
+    GESTION_BIBLIOTECA;
+        
+}
